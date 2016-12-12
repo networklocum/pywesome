@@ -59,6 +59,9 @@ class Pywesome(object):
     
     def __str__(self):
          return 'Pywesome('+ self.entities.__str__() + ')'
+    
+    def __len__(self):
+        return self.count()
 
     def count(self):
         return len(self.entities)
