@@ -136,6 +136,33 @@ def sum(collection, prop=None):
 def avg(collection, prop=None):
     return sum(collection, prop) / len(collection)
 
+
+def group_by(collection, key, key_is_unique=False, 
+             key_transformation_function=lambda a: a, 
+             get_method=getattr):
+        '''
+        :param key: the key to group entities in the collection by
+        :param key_is_unique: whether or not the key is unique. If False, the
+        returning dictionary will contain lists of entities instead of entities
+        :param key_transformation_function: a method used to transform the input
+        keys to be used in the dictionary. Default is to just use the key.
+        :param get_method: the method used to retrieve the field from the item
+        in the collection via a key
+        :return: A dictionary containing the entities grouped by a key that
+         is a field on the entities. If the field isn't found, the key, None, is
+         used. The field must exist if unique_key=True
+        '''
+        if key_is_unique:
+            return {key_transformation_function(get_method(e, key)): e 
+                    for e in collection}
+
+        key_values = set([key_transformation_function(get_method(e, key, None)) 
+                          for e in collection])
+        grouped_dict = {k: collect([]) for k in key_values}
+        for entity in collection:
+            grouped_dict[get_method(entity, key, None)].append(entity)
+        return grouped_dict
+
 '''
 Formatting functions
 '''
