@@ -27,6 +27,7 @@ Python lists on steroids.
 	- [collapse](#)
 	- [sort](#)
 	- [sort_by](#)
+	- [group_by](#)
 	- [first](#)
 	- [last](#)
 	- [get](#)
@@ -372,6 +373,49 @@ collection = collect([{'id': 4, 'name': 'Name'}, {'id': 32, 'name': 'Name', 'pro
 collection.sort_by('id').only('id') # [4, 24, 32]
 
 collection.sort_by('id', desc=True).only('id') # [32, 24, 4]
+```
+
+###group_by(key, **kwargs)
+
+Turn the collection into a dictionary grouped by a key (or attribute) of
+the items in the collection.
+
+#### kwargs
+
+* key_is_unique=False: 
+* key_transformation_function=lambda a: a
+* value_transformation_function=lambda a: a
+* value_list_transformation_function=None
+* get_method=getattr
+
+```
+:param key: the key to group entities in the collection by
+:param key_is_unique: whether or not the key is unique. If False, the
+returning dictionary will contain lists of entities instead of entities
+:param key_transformation_function: a method used to transform the input
+keys to be used in the dictionary. Default is to just use the key.
+:param value_transformation_function: function to transform each value,
+default is not to transform
+:param value_list_transformation_function: function to transform each
+list in the dictionary values, default is to collect them
+:param get_method: the method used to retrieve the field from the item
+in the collection via a key
+:return: A dictionary containing the entities grouped by a key that
+ is a field on the entities. If the field isn't found, the key, None, is
+ used. The field must exist if unique_key=True
+```
+
+
+```python
+collection = Pywesome([{'id': 1}, {'id': 2}])
+result = collection.group_by(
+    'id',
+    key_is_unique=True,
+    get_method=dict.get
+)
+print(collection)
+
+>> {1: {'id': 1}, 2: {'id': 2}}
 ```
 
 ###where(`prop`, `value`)

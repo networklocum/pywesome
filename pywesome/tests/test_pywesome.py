@@ -2,6 +2,8 @@ from pywesome import pywesome as _
 from pywesome.collection import Pywesome
 import unittest
 import json
+from collections import namedtuple
+import copy
 
 
 class TestCollectutilsMethods(unittest.TestCase):
@@ -158,6 +160,74 @@ class TestOperationsMethods(unittest.TestCase):
 
         col = [{'id': 1}, {'id': 2}, {'id': 3}, {'id': 4}, {'id': 5}]
         self.assertEqual(_.avg(col, 'id'), 3)
+
+
+class TestGroupingMethods(unittest.TestCase):
+    Entity = namedtuple('Entity', ['id', 'name'])
+
+    def setUp(self):
+        self.entity1 = self.Entity(id=1, name="a")
+        self.entity2 = self.Entity(id=2, name="b")
+        self.entity3 = self.Entity(id=3, name="a")
+
+    def test_group_by_unique(self):
+        self.collection = Pywesome([self.entity1, self.entity2])
+        result = self.collection.group_by(
+            'id',
+            key_is_unique=True
+        )
+        self.assertEqual(
+            result,
+            {1: self.entity1, 2: self.entity2}
+        )
+
+    def test_group_by_not_unique(self):
+        self.collection = Pywesome([self.entity1, self.entity2, self.entity3])
+        result = self.collection.group_by(
+            'name',
+            value_list_transformation_function=
+            lambda a: sorted(a, key=lambda e: e.id)
+        )
+        self.assertEqual(
+            result,
+            {'a': [self.entity1, self.entity3], 'b': [self.entity2]}
+        )
+
+    def test_group_by_custom_get_method(self):
+        self.collection = Pywesome([{'id': 1}, {'id': 2}])
+        result = self.collection.group_by(
+            'id',
+            key_is_unique=True,
+            get_method=dict.get
+        )
+        self.assertEqual(
+            result,
+            {1: {'id': 1}, 2: {'id': 2}}
+        )
+
+    def test_group_by_transform_everything(self):
+        self.collection = Pywesome([self.entity1, self.entity2, self.entity3])
+
+        def change_entity(entity):
+            return self.Entity(id=entity.id, name=entity.name + 'z')
+
+        result = self.collection.group_by(
+            'name',
+            value_list_transformation_function=
+            lambda a: sorted(a, key=lambda e: e.id),
+            key_transformation_function=lambda a: a + 'y',
+            value_transformation_function=change_entity
+        )
+        changed_entity_1 = change_entity(self.entity1)
+        changed_entity_2 = change_entity(self.entity2)
+        changed_entity_3 = change_entity(self.entity3)
+        self.assertEqual(
+            result,
+            {
+                'ay': [changed_entity_1, changed_entity_3],
+                'by': [changed_entity_2]
+            }
+        )
 
 
 class TestFormattingMethods(unittest.TestCase):
