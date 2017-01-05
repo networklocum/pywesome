@@ -136,6 +136,57 @@ def sum(collection, prop=None):
 def avg(collection, prop=None):
     return sum(collection, prop) / len(collection)
 
+
+def group_by(collection,
+             key,
+             key_is_unique=False,
+             key_transformation_function=lambda a: a,
+             value_transformation_function=lambda a: a,
+             value_list_transformation_function=None,
+             get_method=getattr):
+        '''
+        :param key: the key to group entities in the collection by
+        :param key_is_unique: whether or not the key is unique. If False, the
+        returning dictionary will contain lists of entities instead of entities
+        :param key_transformation_function: a method used to transform the input
+        keys to be used in the dictionary. Default is to just use the key.
+        :param value_transformation_function: function to transform each value,
+        default is not to transform
+        :param value_list_transformation_function: function to transform each
+        list in the dictionary values, default is to collect them
+        :param get_method: the method used to retrieve the field from the item
+        in the collection via a key
+        :return: A dictionary containing the entities grouped by a key that
+         is a field on the entities. If the field isn't found, the key, None, is
+         used. The field must exist if unique_key=True
+        '''
+
+        if key_is_unique:
+            return {key_transformation_function(get_method(e, key)):
+                        value_transformation_function(e)
+                    for e in collection}
+
+        if value_list_transformation_function is None:
+            # Use the collect method of the collection if it exists. Otherwise
+            # leave the list as a list.
+            value_list_transformation_function = getattr(
+                collection, 'collect', lambda a: a
+            )
+
+        key_values = set([key_transformation_function(get_method(e, key, None)) 
+                          for e in collection])
+        grouped_dict = {k: [] for k in key_values}
+        for entity in collection:
+            new_key = key_transformation_function(get_method(entity, key, None))
+            grouped_dict[new_key].append(
+                value_transformation_function(entity)
+            )
+        for dict_key in grouped_dict:
+            grouped_dict[dict_key] = value_list_transformation_function(
+                grouped_dict[dict_key]
+            )
+        return grouped_dict
+
 '''
 Formatting functions
 '''
